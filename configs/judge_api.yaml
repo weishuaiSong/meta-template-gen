@@ -1,0 +1,38 @@
+# Judge via a cloud API (Claude / GPT). Same TemplateJudge, just a different
+# backend — the judge backend is fully independent of the generator backend, so
+# you can generate locally and judge with an API model (or vice versa).
+#
+# Usage:
+#   export ANTHROPIC_API_KEY=sk-...        # or OPENAI_API_KEY
+#   pip install anthropic                   # or: pip install openai
+#   metatemplate-gen judge --pool pool.json --config configs/judge_api.yaml \
+#       --out pool_judged.json --rejected-out rejected.jsonl
+#
+# As a gate inside generation, point --judge-backend/--judge-model at the API:
+#   metatemplate-gen generate --backend transformers --model <local-7B> --count 200 \
+#       --judge-backend anthropic --judge-model claude-sonnet-4-6
+
+# --- Claude (Anthropic) ---
+judge:
+  name: anthropic
+  config:
+    model: claude-sonnet-4-6        # bigger judge = finer discrimination
+    api_key_env: ANTHROPIC_API_KEY
+    temperature: 0.0                # deterministic judging
+    max_tokens: 512
+    concurrency: 4                  # parallel requests
+  n_variants: 3
+  min_score: 3.0
+
+# --- OpenAI (GPT) — swap the block above for this ---
+# judge:
+#   name: openai
+#   config:
+#     model: gpt-4o
+#     api_key_env: OPENAI_API_KEY
+#     # base_url: https://api.openai.com/v1   # or any OpenAI-compatible endpoint
+#     temperature: 0.0
+#     max_tokens: 512
+#     concurrency: 8
+#   n_variants: 3
+#   min_score: 3.0

@@ -1,0 +1,58 @@
+# Default meta-template generation config.
+#
+# Switch backend by editing `backend.name` + `backend.config`:
+#   - vllm      : offline in-process model on the A800 (highest throughput).
+#   - openai    : OpenAI API, OR a local `vllm serve` (set config.base_url).
+#   - anthropic : Claude.
+#
+# Run: metatemplate-gen generate --config configs/gen/default.yaml --out pool.json
+
+backend:
+  # --- Local A800, offline vLLM (default) ---
+  name: vllm
+  config:
+    model: Qwen/Qwen2.5-7B-Instruct
+    tensor_parallel_size: 1          # bump to 8 to shard across all A800s
+    gpu_memory_utilization: 0.90
+    temperature: 1.0                 # high temp -> more syntactic diversity
+    top_p: 0.95
+    max_tokens: 4096
+    seed: 0
+
+  # --- Local A800 via `vllm serve` (OpenAI-compatible) ---
+  # name: openai
+  # config:
+  #   model: Qwen/Qwen2.5-7B-Instruct
+  #   base_url: http://localhost:8000/v1
+  #   api_key: EMPTY
+  #   temperature: 1.0
+  #   concurrency: 16
+
+  # --- Cloud API ---
+  # name: anthropic
+  # config:
+  #   model: claude-sonnet-4-6
+  #   api_key_env: ANTHROPIC_API_KEY
+  #   temperature: 1.0
+  #   concurrency: 4
+
+generate:
+  count: 200            # target number of distinct meta-templates (skeletons)
+  batch_size: 20        # meta-templates requested per LLM call
+  max_rounds: 50
+  stall_patience: 3     # stop after this many empty rounds
+
+# Optional LLM quality gate. If `judge.name` is set (or --judge-backend is passed),
+# each round's candidates are expanded into a few concrete templates and a (larger)
+# judge model rules on whether they read as reasonable, image-agnostic instructions.
+# Use a bigger model here than the generator. Leave commented out to skip judging.
+judge:
+  name: vllm
+  config:
+    model: Qwen/Qwen2.5-32B-Instruct   # larger judge than the generator
+    tensor_parallel_size: 4
+    gpu_memory_utilization: 0.90
+    temperature: 0.0                   # deterministic judging
+    max_tokens: 512
+  n_variants: 3        # templates sampled per meta-template to show the judge
+  min_score: 3.0       # keep meta-templates scoring >= this (1-5 scale)

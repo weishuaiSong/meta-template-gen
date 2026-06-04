@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metatemplate"
+version = "0.0.1"
+description = "LLM-driven generation of instruction meta-templates (skeletons + placeholder synonym sets) for multimodal instruction tuning."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.0"]
+anthropic = ["anthropic>=0.40"]
+vllm = ["vllm>=0.6"]
+diversity = ["numpy>=1.24"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+metatemplate-gen = "metatemplate.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["metatemplate*"]
