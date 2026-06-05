@@ -4,6 +4,8 @@
 
 **LLM-driven generation of instruction meta-templates for multimodal instruction tuning**
 
+**English** | [简体中文](README.zh-CN.md)
+
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-29%20passing-brightgreen.svg)](tests/)
