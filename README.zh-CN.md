@@ -118,21 +118,6 @@ rows = sample_pool(result.pool, n=5000, seed=0)   # 采出 5000 条互异模板
 
 > 💡 实践提示:多样性生成**不要**在 vLLM 配置里固定 `seed`(确定性采样会让每轮产出重复直至停滞);想要句法更丰富,优先换更大的生成器模型。
 
-## 离线 / 防火墙环境(国内服务器)
-
-在无法访问 huggingface.co 的环境(已在 8×A800 NGC 镜像验证):
-
-```bash
-# transformers 路线(复用镜像自带 torch):
-pip install "transformers==4.46.3" accelerate     # transformers≥5 需要 torch≥2.4
-python -c "from modelscope import snapshot_download; print(snapshot_download('Qwen/Qwen2.5-7B-Instruct'))"
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 \
-  metatemplate-gen generate --backend transformers --model <modelscope本地路径> --count 100 --out pool.json
-```
-
-常见报错对照表(均为实际部署中踩过的坑)见英文 README 的
-[Running Offline / Behind a Firewall](README.md#running-offline--behind-a-firewall) 一节。
-
 ## 数据格式
 
 - **meta-template** → `pool.json`(单个 JSON:骨架 + 每个槽的可填词 + 句法标签 + 判官结果,自包含)

@@ -184,33 +184,6 @@ Measured on a single A800-80GB (Qwen2.5-7B generator, 1 request/round):
 - ⚠️ Never set a fixed sampling `seed` for diversity-seeking generation — deterministic
   sampling repeats across rounds and stalls the loop.
 
-## Running Offline / Behind a Firewall
-
-Verified on an 8×A800 NGC image (torch 2.3, driver 525 / CUDA ≤ 12.4, huggingface.co blocked):
-
-```bash
-# transformers route (no new torch):
-pip install "transformers==4.46.3" accelerate           # >=5 disables torch<2.4
-python -c "from modelscope import snapshot_download; print(snapshot_download('Qwen/Qwen2.5-7B-Instruct'))"
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 \
-  metatemplate-gen generate --backend transformers --model <modelscope-path> --count 100 --out pool.json
-
-# vLLM route (isolated venv; driver-matched pins):
-virtualenv ~/vllm_venv                                   # python3-venv may be absent in containers
-~/vllm_venv/bin/pip install "vllm==0.6.3.post1" "transformers==4.46.3"
-~/vllm_venv/bin/pip install -e .
-```
-
-Gotchas collected from real deployments:
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| transformers "PyTorch not found" | transformers ≥5 needs torch ≥2.4 | pin `transformers==4.46.3` |
-| `Descriptors cannot not be created` | protobuf too new | `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` |
-| torch `driver too old` in venv | latest vLLM ships CUDA-13 torch | pin `vllm==0.6.3.post1` (torch 2.4 + cu121) |
-| `torch.distributed.tensor.device_mesh` missing | transformers 5.x with torch 2.4 | pin `transformers==4.46.3` |
-| huggingface.co unreachable | firewall | download via ModelScope, pass the local path |
-
 ## Project Layout
 
 ```
