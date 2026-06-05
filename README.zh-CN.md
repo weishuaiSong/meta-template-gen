@@ -98,7 +98,7 @@ rows = sample_pool(result.pool, n=5000, seed=0)   # 采出 5000 条互异模板
 | 参数 | 说明 | 默认 |
 |---|---|---|
 | `--count` | 目标生成多少个 meta-template | 100 |
-| `--backend` / `--model` | 生成器后端与模型 | — |
+| `--backend` / `--model` | 生成器后端与模型(后端不填**默认 `vllm`**;没装 vLLM 时用 `--backend transformers` 等切换) | `vllm` |
 | `--batch-size` | 每轮向 LLM 请求几条 | 20 |
 | `--seed-pool` | 在已有 pool.json 上续生成 | — |
 | `--avoid` | 与指定文件中的模板保持不重叠(防泄漏) | — |

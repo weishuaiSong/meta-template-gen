@@ -43,12 +43,18 @@ def _read_lines(path: str | Path) -> list[str]:
         return [ln.strip() for ln in f if ln.strip()]
 
 
+DEFAULT_BACKEND = "vllm"
+
+
 def _backend_from(cfg_section: dict, name: str | None, model: str | None, base_url: str | None):
-    """Build a backend from a config section, with CLI flag overrides."""
+    """Build a backend from a config section, with CLI flag overrides.
+
+    Resolution order: CLI flag > config file > DEFAULT_BACKEND (vllm). If vLLM is
+    not installed the backend raises a helpful ImportError at build time —
+    pass ``--backend transformers`` (or another) to use a different one.
+    """
     bcfg = dict(cfg_section.get("config", {}) or {})
-    backend_name = name or cfg_section.get("name")
-    if not backend_name:
-        raise SystemExit("need a backend name (flag or config)")
+    backend_name = name or cfg_section.get("name") or DEFAULT_BACKEND
     if model:
         bcfg["model"] = model
     if base_url:
@@ -176,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
 
     sp = sub.add_parser("generate", help="Generate meta-templates with an LLM backend.")
     sp.add_argument("--config", type=str, default=None)
-    sp.add_argument("--backend", type=str, default=None, help=f"One of: {list_backends()}")
+    sp.add_argument("--backend", type=str, default=None, help=f"One of: {list_backends()} (default: {DEFAULT_BACKEND})")
     sp.add_argument("--model", type=str, default=None)
     sp.add_argument("--base-url", type=str, default=None, help="For vLLM serve / custom OpenAI endpoint.")
     sp.add_argument("--count", type=int, default=None)
@@ -195,7 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     sp = sub.add_parser("judge", help="LLM quality gate over an existing pool (fill placeholders, judge reasonableness).")
     sp.add_argument("--pool", type=str, required=True)
     sp.add_argument("--config", type=str, default=None)
-    sp.add_argument("--backend", type=str, default=None, help=f"Judge backend. One of: {list_backends()}")
+    sp.add_argument("--backend", type=str, default=None, help=f"Judge backend. One of: {list_backends()} (default: {DEFAULT_BACKEND})")
     sp.add_argument("--model", type=str, default=None, help="Judge model (use a larger one, e.g. Qwen2.5-32B-Instruct).")
     sp.add_argument("--base-url", type=str, default=None)
     sp.add_argument("-n", "--n-variants", type=int, default=3, help="Templates sampled per meta-template for judging.")

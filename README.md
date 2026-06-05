@@ -149,7 +149,7 @@ self-contained — skeleton, the fillable words for every slot, syntax tags, and
 
 | Backend | Where it runs | Notes |
 |---|---|---|
-| `vllm` | local GPU, in-process | highest throughput; best for the judge and large runs |
+| `vllm` **(default)** | local GPU, in-process | highest throughput; best for the judge and large runs |
 | `transformers` | local GPU, in-process | reuses whatever torch is already installed; fastest startup |
 | `openai` | API **or** local `vllm serve` | one backend, two roles — switch via `base_url` |
 | `anthropic` | API | Claude |
