@@ -38,7 +38,9 @@ backend:
 
 generate:
   count: 200            # target number of distinct meta-templates (skeletons)
-  batch_size: 20        # meta-templates requested per LLM call
+  batch_size: 20        # meta-templates requested per round (split across `parallel` requests)
+  parallel: 8           # concurrent requests per round — exploits vLLM continuous batching
+                        # and rotates syntax targets across requests (set 1 to disable)
   max_rounds: 50
   stall_patience: 3     # stop after this many empty rounds
 

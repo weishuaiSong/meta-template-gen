@@ -83,6 +83,8 @@ def cmd_generate(args: argparse.Namespace) -> int:
         judge = TemplateJudge(jbackend, n_variants=judge_cfg.get("n_variants", 3))
         print(f"  [judge] gate enabled via {jbackend.name}:{jbackend.config.get('model', '?')}")
 
+    parallel = args.parallel if args.parallel is not None else gen_cfg.get("parallel", 1)
+
     generator = MetaTemplateGenerator(backend)
     result = generator.generate(
         target_count=count,
@@ -93,6 +95,8 @@ def cmd_generate(args: argparse.Namespace) -> int:
         stall_patience=gen_cfg.get("stall_patience", 3),
         judge=judge,
         judge_min_score=args.judge_min_score if args.judge_min_score is not None else judge_cfg.get("min_score", 3.0),
+        parallel=parallel,
+        vary_syntax=gen_cfg.get("vary_syntax", True),
         progress=lambda m: print(f"  {m}"),
     )
     out = args.out or "pool.json"
@@ -187,6 +191,8 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("--base-url", type=str, default=None, help="For vLLM serve / custom OpenAI endpoint.")
     sp.add_argument("--count", type=int, default=None)
     sp.add_argument("--batch-size", type=int, default=None)
+    sp.add_argument("--parallel", type=int, default=None,
+                    help="Concurrent requests per round (vLLM batches them; rotates syntax targets). Default 1.")
     sp.add_argument("--seed-pool", type=str, default=None, help="Existing pool.json to extend.")
     sp.add_argument("--avoid", type=str, default=None, help="Text file of shells to stay disjoint from.")
     sp.add_argument("--out", type=str, default="pool.json")

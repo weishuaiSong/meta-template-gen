@@ -25,8 +25,10 @@ image-agnostic and content-free. It must:
    multiple-choice phrasing. Never write an actual question yourself.
 2. Use lexical-variation placeholders written as ⟨name⟩ (angle brackets U+27E8/U+27E9), \
    e.g. ⟨polite⟩, ⟨look⟩, ⟨image⟩. Each placeholder is a position whose word can vary.
-3. Provide a synonym set for every placeholder. Include "" (empty string) when the word \
-   is optional (e.g. an omittable "please").
+3. Provide a synonym set of 4-6 interchangeable options for EVERY placeholder (plus "" \
+   when the word is truly optional, e.g. an omittable "please"). Every synonym must read \
+   grammatically when dropped into that exact slot — mentally substitute each one into the \
+   full sentence before listing it; discard any that do not fit.
 4. Be tagged with syntax: mood ∈ {declarative, imperative, interrogative}; \
    complexity ∈ {simple, complex}; clause (e.g. "none", "relative", "conditional", "purpose").
 
@@ -41,19 +43,19 @@ _EXAMPLE = [
     {
         "skeleton": "⟨polite⟩ ⟨look⟩ the ⟨image⟩ and ⟨answer⟩ the following question: {question}",
         "placeholders": {
-            "polite": {"synonyms": ["Please", "Kindly", ""], "pos": "function"},
-            "look": {"synonyms": ["examine", "look at", "study"], "pos": "verb"},
-            "image": {"synonyms": ["image", "picture", "photo"], "pos": "noun"},
-            "answer": {"synonyms": ["answer", "respond to", "address"], "pos": "verb"},
+            "polite": {"synonyms": ["Please", "Kindly", "Carefully", ""], "pos": "function"},
+            "look": {"synonyms": ["examine", "look at", "study", "inspect", "observe"], "pos": "verb"},
+            "image": {"synonyms": ["image", "picture", "photo", "photograph", "snapshot"], "pos": "noun"},
+            "answer": {"synonyms": ["answer", "respond to", "address", "reply to", "tackle"], "pos": "verb"},
         },
         "syntax": {"mood": "imperative", "complexity": "simple", "clause": "none"},
     },
     {
         "skeleton": "Based on what is shown in the ⟨image⟩, how would you ⟨answer⟩ the question that ⟨follows⟩: {question}",
         "placeholders": {
-            "image": {"synonyms": ["image", "picture", "scene"], "pos": "noun"},
-            "answer": {"synonyms": ["answer", "respond to"], "pos": "verb"},
-            "follows": {"synonyms": ["follows", "comes next", "is given below"], "pos": "verb"},
+            "image": {"synonyms": ["image", "picture", "scene", "photo", "photograph"], "pos": "noun"},
+            "answer": {"synonyms": ["answer", "respond to", "address", "approach"], "pos": "verb"},
+            "follows": {"synonyms": ["follows", "comes next", "is given below", "appears below", "is stated below"], "pos": "verb"},
         },
         "syntax": {"mood": "interrogative", "complexity": "complex", "clause": "relative"},
     },

@@ -19,6 +19,19 @@ from .schema import MetaTemplate, Placeholder, TemplatePool
 
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 
+# When fanning out parallel requests (and no explicit syntax_target is given),
+# rotate these across the requests so each round pushes on a different region of
+# the sentence-pattern space. Counters small-generator syntax collapse (the
+# observed "90% simple / no clause" failure mode) at zero extra cost.
+SYNTAX_CYCLE: list[dict[str, str]] = [
+    {"mood": "interrogative", "complexity": "complex"},
+    {"mood": "imperative", "complexity": "simple"},
+    {"mood": "declarative", "complexity": "complex"},
+    {"mood": "imperative", "complexity": "complex"},
+    {"mood": "interrogative", "complexity": "simple"},
+    {"mood": "declarative", "complexity": "simple"},
+]
+
 
 def _norm_skeleton(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip().lower()
@@ -110,6 +123,8 @@ class MetaTemplateGenerator:
         judge: Any | None = None,
         judge_min_score: float = 3.0,
         judge_require_reasonable: bool = True,
+        parallel: int = 1,
+        vary_syntax: bool = True,
         progress: Callable[[str], None] | None = None,
     ) -> GenerationResult:
         """Generate until ``target_count`` distinct valid meta-templates exist.
@@ -121,6 +136,12 @@ class MetaTemplateGenerator:
         ``judge``        : optional ``TemplateJudge`` — each round's structurally-valid
                            candidates are LLM-judged and only those scoring
                            ``>= judge_min_score`` (and reasonable, if required) are kept.
+        ``parallel``     : number of independent requests issued per round, sent as one
+                           batched ``backend.complete`` call. With the vLLM backend the
+                           requests decode concurrently (continuous batching), so this
+                           multiplies throughput AND diversity (independent samples).
+        ``vary_syntax``  : when ``parallel > 1`` and no explicit ``syntax_target``,
+                           rotate ``SYNTAX_CYCLE`` targets across the parallel requests.
         """
         log = progress or (lambda _m: None)
         kept: list[MetaTemplate] = list(seed_pool.meta_templates) if seed_pool else []
@@ -131,16 +152,30 @@ class MetaTemplateGenerator:
         counter = len(kept)
         stale_rounds = 0
 
+        parallel = max(1, parallel)
         while len(kept) < target_count and result.rounds < max_rounds:
             result.rounds += 1
             need = target_count - len(kept)
             ask = min(batch_size, need)
             # show the model a sample of what already exists to push for novelty
             avoid_list = [mt.skeleton for mt in kept[-80:]] + list(avoid_shells or [])[:40]
-            user = build_user_prompt(ask, avoid_skeletons=avoid_list, syntax_target=syntax_target)
 
-            responses = self.backend.complete([GenRequest(system=self.system_prompt, user=user)])
-            objs = parse_json_array(responses[0]) if responses else []
+            # Fan out `parallel` independent requests (one batched backend call).
+            # Each asks for a slice of this round's quota; with vLLM they decode
+            # concurrently. Distinct syntax targets per request widen coverage.
+            per_request = max(1, -(-ask // parallel))  # ceil(ask / parallel)
+            requests = []
+            for i in range(parallel):
+                st = syntax_target
+                if st is None and vary_syntax and parallel > 1:
+                    st = SYNTAX_CYCLE[i % len(SYNTAX_CYCLE)]
+                user = build_user_prompt(per_request, avoid_skeletons=avoid_list, syntax_target=st)
+                requests.append(GenRequest(system=self.system_prompt, user=user))
+
+            responses = self.backend.complete(requests)
+            objs: list[dict] = []
+            for resp in responses or []:
+                objs.extend(parse_json_array(resp))
             result.n_raw += len(objs)
 
             # Structurally validate this round's candidates first.

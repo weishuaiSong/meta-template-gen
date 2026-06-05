@@ -99,7 +99,8 @@ rows = sample_pool(result.pool, n=5000, seed=0)   # 采出 5000 条互异模板
 |---|---|---|
 | `--count` | 目标生成多少个 meta-template | 100 |
 | `--backend` / `--model` | 生成器后端与模型(后端不填**默认 `vllm`**;没装 vLLM 时用 `--backend transformers` 等切换) | `vllm` |
-| `--batch-size` | 每轮向 LLM 请求几条 | 20 |
+| `--batch-size` | 每轮总共请求几条(会平分给 `parallel` 个请求) | 20 |
+| `--parallel` | **每轮并发请求数**:vLLM 连续批处理同时解码,放量提速数倍;各请求轮换句法目标,顺带拓宽句型覆盖。建议 vLLM 上设 8+ | 1 |
 | `--seed-pool` | 在已有 pool.json 上续生成 | — |
 | `--avoid` | 与指定文件中的模板保持不重叠(防泄漏) | — |
 | `--judge-backend` / `--judge-model` | 启用判官门(独立后端,可"小模型生成、大模型判") | 关 |

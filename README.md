@@ -46,7 +46,8 @@ instruction     Kindly declare the answer to the given What color is the car? af
 ### Features
 
 **Generation**
-- 🤖 Any LLM authors the skeletons *and* their synonym sets — local (vLLM, 🤗 transformers) or API (OpenAI-compatible, Anthropic), switched by one flag
+- 🤖 Any LLM authors the skeletons *and* their synonym sets (4–6 drop-in synonyms per slot) — local (vLLM, 🤗 transformers) or API (OpenAI-compatible, Anthropic), switched by one flag
+- 🚀 `--parallel N` fans out N concurrent requests per round — vLLM decodes them together (continuous batching), multiplying throughput *and* diversity; syntax targets rotate across the fan-out to widen sentence-pattern coverage
 - 🔁 Diversity feedback loop: previously generated skeletons are fed back each round to push for novel syntax
 - 🎛️ Fully controllable: `--count N`, batch size, stall detection, seedable sampling
 
@@ -175,8 +176,9 @@ Measured on a single A800-80GB (Qwen2.5-7B generator, 1 request/round):
 | 300 templates | — | **944 s** (~19 templates/min, clean pool) |
 
 - For **small runs**, `transformers` wins on startup time.
-- vLLM's ~30× concurrency pays off on **many parallel requests** — i.e. the **judge step**
-  and large-scale runs; the single-request generation loop barely uses it.
+- vLLM's ~30× concurrency pays off on **many parallel requests** — use `--parallel 8`+
+  for generation (requests decode together) and the **judge step** (one request per
+  candidate is batched automatically).
 - A **bigger generator matters more than the backend** for quality: 7B output is 90 %
   syntactically simple, while 32B yields 60–70 % complex sentences across 4–5 clause types.
 - ⚠️ Never set a fixed sampling `seed` for diversity-seeking generation — deterministic
@@ -228,8 +230,7 @@ metatemplate/
 
 - [ ] **Two-stage generation**: skeleton first, then per-slot synonyms validated by
       back-substitution — eliminates ill-fitting synonyms at the source
-- [ ] **Concurrent generation requests** per round to exploit vLLM's batching
-      (faster *and* more diverse than one big request)
+- [ ] Semantic near-duplicate filtering (embedding-based) in the generation loop
 - [ ] Morphology-aware guards (e.g. `⟨examine⟩ing → examineing`)
 - [ ] Seeding from existing hand-written meta-template pools
 
